@@ -22,6 +22,11 @@ contents or enter its API key into a recording.
 The script gives OBS a short lead-in, then runs `demo.ps1`. It is a real test,
 not a replay. A successful run ends with two green `PASS` statements.
 
+Open the recording terminal first, then create a **new** Window Capture source
+for that exact window. Do not reuse a source bound to another Windows Terminal
+tab: it can retain the earlier tab's pixels even though the window title looks
+the same.
+
 In OBS, create a dedicated scene with these settings:
 
 | Setting | Value |
