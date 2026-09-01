@@ -55,6 +55,12 @@ low-latency transcript deltas from live audio. See OpenAI's [Realtime
 transcription guide](https://developers.openai.com/api/docs/guides/realtime-transcription)
 for its current session and latency options.
 
+When the RTP gateway runs in a different container or host namespace than
+Asterisk, bind it to a reachable interface and give Asterisk a reachable
+`external_media_host`; the default loopback values are only for same-host
+deployments. See the [local WSL lab runbook](docs/local-wsl-lab.md) for a
+tested container topology.
+
 ## Quick start: package MixMonitor tracks
 
 The `r()` and `t()` options write receive and transmit tracks separately. Once

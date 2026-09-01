@@ -48,18 +48,27 @@ class RTPReceiveGateway:
     counted rather than growing memory without limit.
     """
 
-    def __init__(self, on_ulaw: Callable[[bytes], Awaitable[None]], *, queue_size: int = 500):
+    def __init__(
+        self,
+        on_ulaw: Callable[[bytes], Awaitable[None]],
+        *,
+        bind_host: str = "127.0.0.1",
+        queue_size: int = 500,
+    ):
         self._on_ulaw = on_ulaw
+        self.bind_host = bind_host
         self._queue: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=queue_size)
         self._transport: asyncio.DatagramTransport | None = None
         self._worker: asyncio.Task | None = None
         self.local_port: int | None = None
+        self.received_packets = 0
+        self.received_bytes = 0
         self.dropped_packets = 0
 
     async def bind(self) -> int:
         loop = asyncio.get_running_loop()
         transport, _ = await loop.create_datagram_endpoint(
-            lambda: _RTPProtocol(self._received), local_addr=("127.0.0.1", 0)
+            lambda: _RTPProtocol(self._received), local_addr=(self.bind_host, 0)
         )
         self._transport = transport
         self.local_port = transport.get_extra_info("sockname")[1]
@@ -67,6 +76,8 @@ class RTPReceiveGateway:
         return self.local_port
 
     def _received(self, ulaw: bytes) -> None:
+        self.received_packets += 1
+        self.received_bytes += len(ulaw)
         try:
             self._queue.put_nowait(ulaw)
         except asyncio.QueueFull:

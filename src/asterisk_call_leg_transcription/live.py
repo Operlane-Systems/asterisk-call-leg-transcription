@@ -58,12 +58,16 @@ class CallLegPipeline:
         transcript: LiveTranscript,
         *,
         prefix: str = "call-leg",
+        rtp_bind_host: str = "127.0.0.1",
+        external_media_host: str = "127.0.0.1",
         snoop_ready_retries: int = 15,
         snoop_ready_delay_s: float = 0.1,
     ):
         self.ari = ari
         self.transcript = transcript
         self.prefix = prefix
+        self.rtp_bind_host = rtp_bind_host
+        self.external_media_host = external_media_host
         self.snoop_ready_retries = snoop_ready_retries
         self.snoop_ready_delay_s = snoop_ready_delay_s
         self._resources: list[_LegResources] = []
@@ -88,7 +92,9 @@ class CallLegPipeline:
             snoop_id=f"{self.prefix}-snoop-{safe_label}-{token}",
             media_id=f"{self.prefix}-media-{safe_label}-{token}",
             bridge_id=f"{self.prefix}-bridge-{safe_label}-{token}",
-            gateway=RTPReceiveGateway(lambda audio: self.transcript.append_ulaw(label, audio)),
+            gateway=RTPReceiveGateway(
+                lambda audio: self.transcript.append_ulaw(label, audio), bind_host=self.rtp_bind_host
+            ),
         )
         try:
             port = await resource.gateway.bind()
@@ -96,7 +102,7 @@ class CallLegPipeline:
             media = await asyncio.to_thread(
                 self.ari.external_media,
                 channel_id=resource.media_id,
-                host=f"127.0.0.1:{port}",
+                host=f"{self.external_media_host}:{port}",
             )
             resource.media_channel_id = media["id"]
             await asyncio.to_thread(self.ari.create_bridge, resource.bridge_id)

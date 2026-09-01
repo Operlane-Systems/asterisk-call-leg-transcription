@@ -1,0 +1,81 @@
+name: asterisk-call-leg-e2e
+
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_ROOT_PASSWORD: lab-root-password
+      MARIADB_DATABASE: asterisk
+      MARIADB_USER: freepbxuser
+      MARIADB_PASSWORD: freepbx-lab-password
+    volumes:
+      - lab_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [lab]
+
+  pbx:
+    image: escomputers/freepbx:17-nofail2ban
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - lab_var:/var
+      - lab_etc:/etc
+      - ./docker/e2e/pbx/ari.conf:/etc/asterisk/ari.conf:ro
+      - ./docker/e2e/pbx/http.conf:/etc/asterisk/http.conf:ro
+      - ./docker/e2e/pbx/pjsip_custom.conf:/etc/asterisk/pjsip_custom.conf:ro
+      - ./docker/e2e/pbx/pjsip.transports_custom_post.conf:/etc/asterisk/pjsip.transports_custom_post.conf:ro
+      - ./docker/e2e/pbx/extensions_custom.conf:/etc/asterisk/extensions_custom.conf:ro
+    ports:
+      - "127.0.0.1:8080:80/tcp"
+    networks: [lab]
+
+  transcriber:
+    build:
+      context: .
+      dockerfile: docker/e2e/transcriber.Dockerfile
+    environment:
+      ARI_URL: http://pbx:8088/ari
+      ARI_USER: lab
+      ARI_PASS: lab-ari-password
+      ARI_APP: call-leg-e2e
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?Set OPENAI_API_KEY in .env.e2e}
+      RTP_BIND_HOST: 0.0.0.0
+      RTP_ADVERTISE_HOST: transcriber
+      TRANSCRIPT_PATH: /artifacts/transcript.jsonl
+    volumes:
+      - lab_artifacts:/artifacts
+    depends_on: [pbx]
+    networks: [lab]
+
+  caller:
+    build:
+      context: .
+      dockerfile: docker/e2e/caller.Dockerfile
+    profiles: [test]
+    environment:
+      SIP_HOST: pbx
+      SIP_PORT: "5060"
+      SIP_USERNAME: lab-client
+      SIP_PASSWORD: ${LAB_SIP_PASSWORD:-lab-sip-password}
+      SIP_EXTENSION: "7000"
+      EXPECTED_TRANSCRIPT: ${EXPECTED_TRANSCRIPT:-one two three four five}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?Set OPENAI_API_KEY in .env.e2e}
+    depends_on: [transcriber]
+    networks: [lab]
+
+networks:
+  lab:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+volumes:
+  lab_mysql:
+  lab_var:
+  lab_etc:
+  lab_artifacts:

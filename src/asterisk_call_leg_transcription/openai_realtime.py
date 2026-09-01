@@ -76,6 +76,7 @@ class _LegSession:
         self.tasks: list[asyncio.Task] = []
         self.closed = False
         self._rate_state = None
+        self._completed = asyncio.Event()
 
     async def start(self) -> None:
         self.websocket = await websockets.connect(
@@ -100,7 +101,11 @@ class _LegSession:
                         "input": {
                             "format": {"type": "audio/pcm", "rate": PCM_RATE},
                             "transcription": transcription,
-                            "turn_detection": {"type": "server_vad", "silence_duration_ms": 600},
+                            # gpt-live-transcribe uses explicit turn commits.  This
+                            # keeps a call-leg stream model-compatible and lets the
+                            # PBX lifecycle, rather than diarization or VAD guesses,
+                            # determine the boundary.
+                            "turn_detection": None,
                         }
                     },
                 },
@@ -138,11 +143,14 @@ class _LegSession:
     async def _send_loop(self) -> None:
         while True:
             pcm = await self.input.get()
-            if pcm is None:
-                return
-            await self._send(
-                {"type": "input_audio_buffer.append", "audio": base64.b64encode(pcm).decode("ascii")}
-            )
+            try:
+                if pcm is None:
+                    return
+                await self._send(
+                    {"type": "input_audio_buffer.append", "audio": base64.b64encode(pcm).decode("ascii")}
+                )
+            finally:
+                self.input.task_done()
 
     async def _receive_loop(self) -> None:
         assert self.websocket is not None
@@ -163,6 +171,7 @@ class _LegSession:
                             event.get("item_id"),
                         )
                     )
+                    self._completed.set()
         except Exception:
             if not self.closed:
                 raise
@@ -170,6 +179,14 @@ class _LegSession:
     async def stop(self) -> None:
         if self.closed:
             return
+        # Flush every RTP chunk first, then explicitly finish this call leg's
+        # current turn.  gpt-live-transcribe does not support server VAD.
+        try:
+            await asyncio.wait_for(self.input.join(), timeout=5)
+            await self._send({"type": "input_audio_buffer.commit"})
+            await asyncio.wait_for(self._completed.wait(), timeout=10)
+        except (asyncio.TimeoutError, websockets.WebSocketException):
+            pass
         self.closed = True
         self.input.put_nowait(None)
         if self.websocket:
