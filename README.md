@@ -73,6 +73,16 @@ It renders the caller-leg topology, runs the isolated FreePBX/Asterisk E2E
 call, and replays the caller-labelled transcript events. See the [local WSL
 lab runbook](docs/local-wsl-lab.md) for setup.
 
+For a capture-ready version with a short lead-in, use:
+
+```powershell
+.\docker\e2e\recording-run.ps1 -EnvFile C:\path\to\.env.e2e
+```
+
+The [demo launch kit](docs/demo-launch.md) includes the OBS framing, a short
+cut plan, and ready-to-edit GitHub and LinkedIn copy. The included recording
+script is still a real E2E run; it is not a simulated terminal replay.
+
 ## Quick start: package MixMonitor tracks
 
 The `r()` and `t()` options write receive and transmit tracks separately. Once
