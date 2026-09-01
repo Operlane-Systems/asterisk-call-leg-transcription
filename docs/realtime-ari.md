@@ -37,6 +37,14 @@ channel was created.
 
 ## Boundaries
 
-This repository will provide a small ARI reference implementation, but does not
-ship an AI voice agent, a PBX management console, SIP trunk credentials, or
-recording-compliance policy. Those remain application concerns.
+The reference implementation is in `src/asterisk_call_leg_transcription/`:
+
+* `ari.py` owns only the ARI resources the pipeline creates.
+* `rtp.py` validates RTP headers and uses bounded queues so a slow transcription
+  provider never blocks receipt from Asterisk.
+* `live.py` owns the ordered setup, Snoop-ready retry, and symmetrical cleanup.
+* `openai_realtime.py` is an optional adapter, not a requirement of the ARI
+  pipeline.
+
+It does not ship an AI voice agent, a PBX management console, SIP trunk
+credentials, or recording-compliance policy. Those remain application concerns.

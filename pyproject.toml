@@ -7,9 +7,13 @@ name = "asterisk-call-leg-transcription"
 version = "0.1.0"
 description = "Reliable per-leg transcription primitives for Asterisk and FreePBX"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 license = { text = "Apache-2.0" }
 authors = [{ name = "Operlane Systems LLC" }]
+dependencies = [
+  "requests>=2.31,<3",
+  "websockets>=14,<17",
+]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "License :: OSI Approved :: Apache Software License",
