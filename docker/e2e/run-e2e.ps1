@@ -13,13 +13,36 @@ if (-not $ExpectedTranscript) {
   $ExpectedTranscript = if ($configuredExpected) { ($configuredExpected -split '=', 2)[1] } else { 'one two three four five' }
 }
 $compose = @('-f', 'docker-compose.e2e.yml', '--env-file', $EnvFile)
+
+function Invoke-DockerCompose {
+  param([Parameter(ValueFromRemainingArguments = $true)][string[]]$ComposeArguments)
+
+  $previousErrorActionPreference = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = 'SilentlyContinue'
+    $output = @(& docker compose @compose @ComposeArguments)
+    $exitCode = $LASTEXITCODE
+  }
+  finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+  }
+  if ($exitCode -ne 0) {
+    throw "docker compose $($ComposeArguments -join ' ') failed (exit code $exitCode)."
+  }
+  $output
+}
+
 & "$PSScriptRoot\bootstrap.ps1" -EnvFile $EnvFile
-& docker compose @compose exec -T transcriber sh -lc 'rm -f /artifacts/transcript.jsonl'
-& docker compose @compose --profile test run --build --rm caller
-if ($LASTEXITCODE -ne 0) { throw 'SIP caller failed.' }
+Invoke-DockerCompose exec -T transcriber sh -lc 'rm -f /artifacts/transcript.jsonl'
+try {
+  Invoke-DockerCompose --profile test run --build --rm caller
+}
+catch {
+  throw 'SIP caller failed.'
+}
 $actual = ''
 for ($attempt = 0; $attempt -lt 12; $attempt++) {
-  $artifact = & docker compose @compose exec -T transcriber sh -lc 'cat /artifacts/transcript.jsonl 2>/dev/null || true'
+  $artifact = Invoke-DockerCompose exec -T transcriber sh -lc 'cat /artifacts/transcript.jsonl 2>/dev/null || true'
   $completed = if ($artifact) { $artifact | ConvertFrom-Json | Where-Object { $_.speaker -eq 'caller' -and $_.type -eq 'completed' -and $_.text } }
   $actual = ($completed | ForEach-Object { $_.text }) -join ' '
   if ($actual) { break }

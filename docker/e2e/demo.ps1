@@ -43,7 +43,25 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $compose = @('-f', 'docker-compose.e2e.yml', '--env-file', $EnvFile)
-$artifact = & docker compose @compose exec -T transcriber sh -lc 'cat /artifacts/transcript.jsonl'
+function Invoke-DockerCompose {
+  param([Parameter(ValueFromRemainingArguments = $true)][string[]]$ComposeArguments)
+
+  $previousErrorActionPreference = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = 'SilentlyContinue'
+    $output = @(& docker compose @compose @ComposeArguments)
+    $exitCode = $LASTEXITCODE
+  }
+  finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+  }
+  if ($exitCode -ne 0) {
+    throw "docker compose $($ComposeArguments -join ' ') failed (exit code $exitCode)."
+  }
+  $output
+}
+
+$artifact = Invoke-DockerCompose exec -T transcriber sh -lc 'cat /artifacts/transcript.jsonl'
 $events = @($artifact | ConvertFrom-Json | Where-Object { $_.speaker -eq 'caller' })
 $completed = @($events | Where-Object { $_.type -eq 'completed' -and $_.text } | Select-Object -Last 1)
 if (-not $completed) { throw 'The E2E call passed but did not leave a caller completion event.' }
