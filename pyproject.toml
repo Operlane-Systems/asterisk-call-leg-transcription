@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "asterisk-call-leg-transcription"
+version = "0.1.0"
+description = "Reliable per-leg transcription primitives for Asterisk and FreePBX"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Operlane Systems LLC" }]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+]
+
+[project.scripts]
+asterisk-call-leg-transcription = "asterisk_call_leg_transcription.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,35 @@
+name: Bug report
+description: Report a reproducible issue with the reference implementation.
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never include phone numbers, call recordings, API keys, credentials, or other sensitive call data.
+  - type: input
+    id: versions
+    attributes:
+      label: Asterisk and FreePBX versions
+      placeholder: "Asterisk 22.x, FreePBX 17.x"
+    validations:
+      required: true
+  - type: textarea
+    id: topology
+    attributes:
+      label: Call and media topology
+      description: Describe the call legs, bridges, and whether this is MixMonitor or ARI.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
