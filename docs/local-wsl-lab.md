@@ -56,6 +56,17 @@ labelled caller completion containing at least three expected words from
 `.env.e2e`. This tolerates punctuation and small speech-to-text variations
 without masking an empty or misrouted audio path.
 
+## Run the terminal demo
+
+For a presentation-ready terminal walkthrough that runs the same E2E test and
+then displays the captured caller-labelled transcript events:
+
+```powershell
+.\docker\e2e\demo.ps1
+```
+
+This is the recommended command to record for a project announcement or demo.
+
 Inspect live outputs without exposing any service publicly:
 
 ```powershell

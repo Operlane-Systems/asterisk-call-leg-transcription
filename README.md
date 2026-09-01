@@ -61,6 +61,18 @@ Asterisk, bind it to a reachable interface and give Asterisk a reachable
 deployments. See the [local WSL lab runbook](docs/local-wsl-lab.md) for a
 tested container topology.
 
+## Terminal demo
+
+With a populated `.env.e2e`, run the curated live demo from PowerShell:
+
+```powershell
+.\docker\e2e\demo.ps1
+```
+
+It renders the caller-leg topology, runs the isolated FreePBX/Asterisk E2E
+call, and replays the caller-labelled transcript events. See the [local WSL
+lab runbook](docs/local-wsl-lab.md) for setup.
+
 ## Quick start: package MixMonitor tracks
 
 The `r()` and `t()` options write receive and transmit tracks separately. Once

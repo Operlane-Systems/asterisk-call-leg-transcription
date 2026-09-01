@@ -52,7 +52,11 @@ def main() -> None:
     # Prepare speech before the call begins.  A generic SIP client should
     # transmit media as soon as the far end answers; delaying this work until
     # after answer lets its real-time media buffer advance through silence.
-    audio = synthesize(os.environ["EXPECTED_TRANSCRIPT"], os.environ["OPENAI_API_KEY"])
+    expected = os.environ["EXPECTED_TRANSCRIPT"]
+    # Repeat a short test phrase so the E2E signal remains clear even when a
+    # SIP implementation drops the first few media frames while its RTP path
+    # becomes symmetric.
+    audio = synthesize(". ".join([expected] * 3), os.environ["OPENAI_API_KEY"])
     print(f"Generated {len(audio)} μ-law bytes; max RMS {audioop.rms(audioop.ulaw2lin(audio, 2), 2)}", flush=True)
     phone = VoIPPhone(
         host,
