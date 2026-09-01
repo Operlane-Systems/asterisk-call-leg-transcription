@@ -4,6 +4,12 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+# Docker Compose reports ordinary progress on stderr.  PowerShell 7 can treat
+# that stream as a terminating NativeCommandError when ErrorActionPreference is
+# Stop, even when Docker returned success.
+if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+  $PSNativeCommandUseErrorActionPreference = $false
+}
 if (-not (Test-Path $EnvFile)) { throw "Environment file not found: $EnvFile" }
 $compose = @('-f', 'docker-compose.e2e.yml', '--env-file', $EnvFile)
 if ($Reset) { & docker compose @compose down --volumes --remove-orphans }

@@ -8,6 +8,9 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+    $PSNativeCommandUseErrorActionPreference = $false
+}
 
 try {
     Clear-Host

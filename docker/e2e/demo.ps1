@@ -4,6 +4,9 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+  $PSNativeCommandUseErrorActionPreference = $false
+}
 
 function Write-Banner([string]$Text) {
   Write-Host ''
@@ -23,7 +26,7 @@ if (-not $ExpectedTranscript) {
 }
 
 Write-Banner 'ASTERISK CALL-LEG TRANSCRIPTION  |  LIVE PBX DEMO'
-Write-Host '  Speaker attribution comes from the PBX media topology—not diarization.' -ForegroundColor Gray
+Write-Host '  Speaker attribution comes from the PBX media topology -- not diarization.' -ForegroundColor Gray
 Write-Host ''
 Write-Host '  PJSIP caller channel' -ForegroundColor Yellow
 Write-Host '        |  spy=in' -ForegroundColor DarkGray

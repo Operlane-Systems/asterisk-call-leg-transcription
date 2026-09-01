@@ -4,6 +4,9 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+  $PSNativeCommandUseErrorActionPreference = $false
+}
 if (-not (Test-Path $EnvFile)) { throw "Environment file not found: $EnvFile" }
 if (-not $ExpectedTranscript) {
   $configuredExpected = (Get-Content $EnvFile | Where-Object { $_ -match '^EXPECTED_TRANSCRIPT=' } | Select-Object -First 1)
